@@ -122,6 +122,7 @@ main[hidden]{display:none}
 .rsbtn{margin-left:10px;font:inherit;font-size:11.5px;background:var(--chip);color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:2px 10px;cursor:pointer;vertical-align:middle}
 
 /* ===== Dashboard ===== */
+#dper{max-width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}#dper button{white-space:nowrap}.dtw.dcw{max-height:none}.dcas td.sd,.dcas th.sd{font-weight:800;background:#16222b;color:#f5ff00}.dcas tr.tt td{border-top:2px solid var(--line);font-weight:700}
 #v-dash .dtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 14px}
 .dseg{display:inline-flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;background:var(--card)}
 .dseg button{background:none;border:0;color:var(--mut);font:inherit;font-size:12.5px;font-weight:700;padding:5px 12px;cursor:pointer}
@@ -175,12 +176,10 @@ body.lector #dc-ag{display:none}
 <main id="v-dash" hidden>
 <h1>Dashboard <em>decisiones</em></h1>
 <div class="sub" id="dsub"></div>
-<div class="dtools"><div class="dseg" id="dper" role="group" aria-label="Periodo"><button type="button" data-v="30">30 días</button><button type="button" data-v="90">90 días</button><button type="button" data-v="all" class="on">Todo</button></div></div>
-<h2>Lectura automática</h2>
-<ul class="dlect" id="dlect"></ul>
+<div class="dtools"><div class="dseg" id="dper" role="group" aria-label="Periodo"></div></div>
 <div class="dkpis" id="dkpis"></div>
 <div class="dgrid" id="dgrid"></div>
-<div class="foot" style="margin:10px 0 22px">Todo se calcula en vivo con la hoja: beneficio por fecha de liquidación de cada apuesta (los bonos y ajustes no cuentan, Regla 11), casa y tipo según la pestaña Ofertas, capital según Resumen y agenda según Tareas. «Sin oferta» = O-000 y O-00A. El potencial anotado es el que figura en la hoja Ofertas y a veces es aproximado.</div>
+<div class="foot" style="margin:10px 0 22px">Todo se calcula en vivo con la hoja: beneficio por fecha de liquidación de cada apuesta (los bonos y ajustes no cuentan, Regla 11) y casa según la pestaña Ofertas. «Sin oferta» = O-000 y O-00A. La tabla de casas es el estado actual según el Resumen de la hoja y no depende del filtro de periodo.</div>
 </main>
 <div id="dtip" class="dtip" hidden></div>
 <main id="v-oab" hidden>
@@ -658,6 +657,7 @@ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.write
 var MS=864e5;
 var C={blue:"#3987e5",orange:"#d95926",red:"#e66767",ink:"#E8EEF2",mut:"#8D9BA6",line:"#222E37",card:"#111A20",grid:"#1c2831"};
 var S={per:"all",curve:"acc",dim:"casa",met:"tot",view:{}};
+var MESN=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 var esc=function(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
 var num=function(v){return typeof oaN==="function"?oaN(v):(parseFloat(String(v==null?"":v).replace(/[^\d,.\-]/g,"").replace(",","."))||0)};
 var fE=function(v,sg,d){d=d==null?2:d;var s=Math.abs(v).toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d});return(v<0?"−":(sg&&v>0?"+":""))+s+" €"};
@@ -685,11 +685,13 @@ function load(){
   bets.forEach(function(b){b.ck=casaOf(b.id,b);b.tipo=isSin(b.id)?"Sin oferta":((offers[b.id]&&offers[b.id].tipo)||"Otro")});
   return{offers:offers,bets:bets,names:names};
 }
-function cutoff(){var t=day0(ZT());return S.per==="30"?new Date(t-30*MS):S.per==="90"?new Date(t-90*MS):null}
+function range(){if(!/^\d{4}-\d{2}$/.test(S.per))return{from:null,to:null};var y=+S.per.slice(0,4),m=+S.per.slice(5)-1;return{from:new Date(y,m,1),to:new Date(y,m+1,1)}}
+function cutoff(){return range().from}
+function months(DT){var set={};DT.bets.forEach(function(b){if(b.est==="Liquidada"&&b.liq&&b.q!=null){var k=b.liq.getFullYear()+"-"+("0"+(b.liq.getMonth()+1)).slice(-2);set[k]=1}});var n=ZT(),ck=n.getFullYear()+"-"+("0"+(n.getMonth()+1)).slice(-2);set[ck]=1;return Object.keys(set).sort()}
 
 /* ---------- agregados ---------- */
 function agg(DT){
-  var cut=cutoff(),liq=DT.bets.filter(function(b){return b.est==="Liquidada"&&b.liq&&b.q!=null&&(!cut||b.liq>=cut)});
+  var rg=range(),cut=rg.from,liq=DT.bets.filter(function(b){return b.est==="Liquidada"&&b.liq&&b.q!=null&&(!rg.from||(b.liq>=rg.from&&b.liq<rg.to))});
   var byId={};
   liq.forEach(function(b){var o=byId[b.id]||(byId[b.id]={id:b.id,q:0,last:b.liq,ck:b.ck,tipo:b.tipo,n:0});o.q+=b.q;o.n++;if(b.liq>o.last)o.last=b.liq});
   var ids=Object.keys(byId).map(function(k){return byId[k]});
@@ -698,10 +700,10 @@ function agg(DT){
   var totOf=sum(ofs,function(o){return o.q}),totSin=sum(sins,function(b){return b.q});
   var med=function(a){if(!a.length)return 0;var s=a.slice().sort(function(x,y){return x-y}),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2};
   var sd=function(a){if(a.length<2)return 0;var m=sum(a,function(x){return x})/a.length;return Math.sqrt(sum(a,function(x){return(x-m)*(x-m)})/(a.length-1))};
-  return{cut:cut,liq:liq,ofs:ofs,sins:sins,totOf:totOf,totSin:totSin,tot:totOf+totSin,med:med(ofs.map(function(o){return o.q})),mean:ofs.length?totOf/ofs.length:0,
+  return{cut:cut,to:rg.to,liq:liq,ofs:ofs,sins:sins,totOf:totOf,totSin:totSin,tot:totOf+totSin,med:med(ofs.map(function(o){return o.q})),mean:ofs.length?totOf/ofs.length:0,
     pos:ofs.filter(function(o){return o.q>=0}).length,sdOf:sd(ofs.map(function(o){return o.q})),sdSin:sd(sins.map(function(b){return b.q}))};
 }
-function prevTotal(DT){var cut=cutoff();if(!cut)return null;var len=day0(ZT())-cut,p0=new Date(cut-len);var t=0;DT.bets.forEach(function(b){if(b.est==="Liquidada"&&b.liq&&b.q!=null&&b.liq>=p0&&b.liq<cut)t+=b.q});return t}
+function prevTotal(DT){var rg=range();if(!rg.from)return null;var p0=new Date(rg.from.getFullYear(),rg.from.getMonth()-1,1);var tt=0;DT.bets.forEach(function(b){if(b.est==="Liquidada"&&b.liq&&b.q!=null&&b.liq>=p0&&b.liq<rg.from)tt+=b.q});return tt}
 
 /* ---------- utilidades de gráfico ---------- */
 function ticks(min,max,n){var span=max-min||1,st=Math.pow(10,Math.floor(Math.log10(span/n))),e=span/n/st;st*=e>=5?5:e>=2?2:1;var a=Math.floor(min/st+1e-9)*st,o=[];for(var v=a,k=0;k<60;k++,v=a+k*st){o.push(Math.round(v*1e6)/1e6);if(v>=max-st*1e-6)break}return o}
@@ -718,7 +720,7 @@ function vtog(id){return toggles("v:"+id,[["g","Gráfico"],["t","Tabla"]],view(i
 /* ---------- 1. curva de beneficio ---------- */
 function curve(DT,A){
   var cut=A.cut,all=A.liq;if(!all.length)return{html:'<div class="none">Sin apuestas liquidadas en este periodo.</div>',tab:""};
-  var first=cut||new Date(Math.min.apply(null,all.map(function(b){return b.liq.getTime()}))),today=day0(ZT());first=day0(first);
+  var first=cut||new Date(Math.min.apply(null,all.map(function(b){return b.liq.getTime()}))),today=day0(ZT());first=day0(first);if(A.to){var le=new Date(A.to.getTime()-MS);if(le<today)today=le}
   var n=Math.round((today-first)/MS)+1,dOf=new Array(n).fill(0),dSin=new Array(n).fill(0);
   all.forEach(function(b){var i=Math.round((day0(b.liq)-first)/MS);if(i<0||i>=n)return;(isSin(b.id)?dSin:dOf)[i]+=b.q});
   var W=width("dcv"),H=300,m={l:52,r:S.curve==="acc"?118:18,t:16,b:30},pw=W-m.l-m.r,ph=H-m.t-m.b;
@@ -784,41 +786,22 @@ function bars(DT,A){
 }
 function barsHover(R){var svg=$("dbrs");if(!svg||!R.rows)return;svg.querySelectorAll(".dbar").forEach(function(g){var r=R.rows[+g.getAttribute("data-i")];g.onmousemove=function(ev){tip('<b>'+esc(r.lab)+'</b><div class="tr">Beneficio<b>'+fE(r.tot,1)+'</b></div><div class="tr">Por oferta<b>'+fE(r.avg,1)+'</b></div><div class="tr">Ofertas<b>'+r.n+'</b> ('+pct(r.pos/r.n)+' en positivo)</div><div class="tm2">Mejor '+esc(r.best.id)+' '+fE(r.best.q,1)+' · Peor '+esc(r.worst.id)+' '+fE(r.worst.q,1)+'</div>',ev)};g.onmouseleave=untip})}
 
-/* ---------- 3. potencial vs cobrado ---------- */
-function dumb(DT,A){
-  var rows=[];A.ofs.forEach(function(o){var d=DT.offers[o.id];if(!d||d.estado!=="F")return;var p=num(d.ben);if(!(p>0)||/#ERR/i.test(String(d.ben)))return;rows.push({id:o.id,casa:DT.names[o.ck]||o.ck,p:p,r:o.q,last:o.last})});
-  rows.sort(function(a,b){return b.last-a.last});rows=rows.slice(0,16);
-  if(!rows.length)return{html:'<div class="none">Sin ofertas finalizadas con potencial anotado en este periodo.</div>',tab:"",sum:null};
-  var sp=rows.reduce(function(s,r){return s+r.p},0),sr=rows.reduce(function(s,r){return s+r.r},0);
-  var W=width("ddb"),rh=24,m={l:W<460?92:150,r:W<460?58:78,t:8,b:24},pw=W-m.l-m.r,all=[0];rows.forEach(function(r){all.push(r.p,r.r)});
-  var tk=ticks(Math.min.apply(null,all),Math.max.apply(null,all),4),a0=tk[0],a1=tk[tk.length-1],X=function(v){return m.l+(v-a0)/(a1-a0||1)*pw},H=m.t+m.b+rows.length*rh,g="";
-  tk.forEach(function(v){g+='<line x1="'+X(v)+'" x2="'+X(v)+'" y1="'+m.t+'" y2="'+(H-m.b)+'" stroke="'+(v===0?"#3a4a56":C.grid)+'" stroke-width="'+(v===0?1.5:1)+'"/><text x="'+X(v)+'" y="'+(H-8)+'" text-anchor="middle" class="ax">'+fE(v,0,0)+'</text>'});
-  rows.forEach(function(r,i){var cy=m.t+i*rh+rh/2,d=r.r-r.p;
-    g+='<g class="dbar" data-i="'+i+'"><rect x="0" y="'+(cy-rh/2)+'" width="'+W+'" height="'+rh+'" fill="transparent"/><text x="'+(m.l-10)+'" y="'+(cy+4)+'" text-anchor="end" class="dl" fill="'+C.ink+'">'+esc(r.id)+'<tspan fill="'+C.mut+'" font-size="11"> '+(W<460?"":esc(r.casa.length>12?r.casa.slice(0,11)+"…":r.casa))+'</tspan></text><line x1="'+X(r.p)+'" x2="'+X(r.r)+'" y1="'+cy+'" y2="'+cy+'" stroke="#5a6b78" stroke-width="2"/><circle cx="'+X(r.p)+'" cy="'+cy+'" r="5" fill="'+C.card+'" stroke="'+C.mut+'" stroke-width="2"/><circle cx="'+X(r.r)+'" cy="'+cy+'" r="5" fill="'+(r.r>=0?C.blue:C.red)+'" stroke="'+C.card+'" stroke-width="2"/><text x="'+(W-m.r+8)+'" y="'+(cy+4)+'" class="dl" fill="'+C.ink+'">'+(d<-0.005?"▼ ":d>0.005?"▲ ":"")+fE(d,1,1)+'</text></g>'});
-  return{html:'<svg id="ddbs" width="'+W+'" height="'+H+'" role="img" aria-label="Beneficio potencial anotado frente a cobrado">'+g+'</svg>',rows:rows,sum:{p:sp,r:sr,n:rows.length},
-    tab:tbl(["Oferta","Casa","Potencial","Cobrado","Diferencia"],rows.map(function(r){return[esc(r.id),esc(r.casa),fE(r.p,1),fE(r.r,1),fE(r.r-r.p,1)]})),
-    legend:'<div class="dleg"><span><i class="ring"></i>Potencial anotado</span><span><i style="background:'+C.blue+'"></i>Cobrado</span><span class="mut">▼/▲ = diferencia</span></div>'};
-}
-function dumbHover(R){var svg=$("ddbs");if(!svg||!R.rows)return;svg.querySelectorAll(".dbar").forEach(function(g){var r=R.rows[+g.getAttribute("data-i")];g.onmousemove=function(ev){tip('<b>'+esc(r.id)+' · '+esc(r.casa)+'</b><div class="tr">Potencial anotado<b>'+fE(r.p,1)+'</b></div><div class="tr">Cobrado<b>'+fE(r.r,1)+'</b></div><div class="tr">Diferencia<b>'+fE(r.r-r.p,1)+'</b></div>',ev)};g.onmouseleave=untip})}
-
-/* ---------- 4. capital por casa ---------- */
-function capital(DT){
+/* ---------- 4. estado de las casas ---------- */
+function casas(DT){
   var RSx=(typeof RS!=="undefined")?RS:null,rows=[];
-  ((RSx&&RSx.casas)||[]).forEach(function(r){var teo=num(r[7]),blq=num(r[8]),dis=num(r[9]),real=num(r[10]),desc=num(r[11]);var tot=Math.max(dis,0)+Math.max(blq,0);if(tot<=0.005)return;rows.push({c:String(r[0]).replace(/\s*\(.*$/,""),blq:Math.max(blq,0),dis:Math.max(dis,0),desc:desc,hasReal:/\d/.test(String(r[10]||"")),real:real})});
-  rows.sort(function(a,b){return(b.blq+b.dis)-(a.blq+a.dis)});
-  if(!rows.length)return{html:'<div class="none">Conecta con la hoja para ver el capital por casa.</div>',tab:"",rows:[]};
-  var shown=rows.slice(0,12),W=width("dcp"),rh=27,m={l:W<460?92:128,r:W<460?70:100,t:6,b:6},pw=W-m.l-m.r,mx=Math.max.apply(null,shown.map(function(r){return r.blq+r.dis})),X=function(v){return m.l+v/mx*pw},H=m.t+m.b+shown.length*rh,out="";
-  shown.forEach(function(r,i){var y=m.t+i*rh,cy=y+rh/2,x=m.l,lbl=r.c.length>(W<460?12:17)?r.c.slice(0,W<460?11:16)+"…":r.c;
-    out+='<g class="dbar" data-i="'+i+'"><rect x="0" y="'+y+'" width="'+W+'" height="'+rh+'" fill="transparent"/><text x="'+(m.l-10)+'" y="'+(cy+4)+'" text-anchor="end" class="dl" fill="'+C.ink+'">'+esc(lbl)+'</text>';
-    if(r.dis>0){var w=Math.max(2,X(r.dis)-m.l);out+='<rect x="'+x+'" y="'+(y+5)+'" width="'+w+'" height="'+(rh-10)+'" rx="3" fill="'+C.blue+'"/>';x+=w+2}
-    if(r.blq>0){var w2=Math.max(2,X(r.blq)-m.l);out+='<rect x="'+x+'" y="'+(y+5)+'" width="'+w2+'" height="'+(rh-10)+'" rx="3" fill="'+C.orange+'"/>';x+=w2}
-    out+='<text x="'+(x+7)+'" y="'+(cy+4)+'" class="dl" fill="'+C.ink+'"><tspan font-weight="700">'+fE(r.blq+r.dis,0,0)+'</tspan>'+(Math.abs(r.desc)>=0.5?'<tspan fill="#fab219"> ⚠ '+fE(r.desc,1,0)+'</tspan>':'')+'</text></g>'});
-  var tab=tbl(["Casa","Disponible","Bloqueado","Total","Descuadre (real − teórico)"],rows.map(function(r){return[esc(r.c),fE(r.dis),fE(r.blq),fE(r.dis+r.blq),Math.abs(r.desc)>=0.5?fE(r.desc,1):"–"]}));
-  var ph=0,phn=0;DT.bets.forEach(function(b){if(b.est==="Liquidada"&&b.blq>0){ph+=b.blq;phn++}});var pend=0;DT.bets.forEach(function(b){if(b.est!=="Liquidada"&&b.est!=="Propuesta"&&b.blq>0)pend+=b.blq});
-  var note=ph>=1?'<div class="dwarn"><b>\u26a0 Dato a revisar:</b> la hoja cuenta '+fE(ph+pend,2)+' bloqueados, pero solo '+fE(pend,2)+' son de apuestas pendientes. Los otros '+fE(ph,2)+' est\u00e1n en '+phn+' filas ya liquidadas que siguen mostrando importe bloqueado.</div>':'';
-  return{note:note,html:'<svg id="dcps" width="'+W+'" height="'+H+'" role="img" aria-label="Capital disponible y bloqueado por casa">'+out+'</svg>',tab:tab,rows:shown,all:rows,legend:legend([{s:"background:"+C.blue,t:"Disponible"},{s:"background:"+C.orange,t:"Bloqueado en pendientes"}])+(rows.length>12?'<div class="mut sm">Se muestran las 12 casas con más capital; la tabla incluye todas.</div>':'')};
+  ((RSx&&RSx.casas)||[]).forEach(function(r){var o={c:String(r[0]).replace(/\s*\(.*$/,""),ing:num(r[3]),ret:num(r[4]),ben:num(r[6]),sal:num(r[7]),blq:Math.max(num(r[8]),0)};
+    if([o.ing,o.ret,o.ben,o.sal,o.blq].some(function(v){return Math.abs(v)>=0.005}))rows.push(o)});
+  rows.sort(function(a,b){return b.sal-a.sal});
+  if(!rows.length)return{html:'<div class="none">Conecta con la hoja para ver el estado de las casas.</div>',tot:null,rows:[]};
+  var T={ing:0,ret:0,ben:0,sal:0,blq:0};rows.forEach(function(r){for(var k in T)T[k]+=r[k]});
+  var col=function(v){return v>0.004?' style="color:'+C.blue+'"':v<-0.004?' style="color:'+C.red+'"':''};
+  var dash=function(v,f){return Math.abs(v)<0.005?'<span class="mut">–</span>':f(v)};
+  var tr=function(r,cls){return'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+esc(r.c)+'</td><td class="num">'+dash(r.ing,function(v){return fE(v)})+'</td><td class="num">'+dash(r.ret,function(v){return fE(v)})+'</td><td class="num">'+dash(r.blq,function(v){return fE(v)})+'</td><td class="num"'+col(r.ben)+'>'+dash(r.ben,function(v){return fE(v,1)})+'</td><td class="num sd">'+fE(r.sal)+'</td></tr>'};
+  var html='<div class="tw dtw dcw"><table class="atb dcas"><thead><tr><th>Casa</th><th class="num">Ingresado</th><th class="num">Retirado</th><th class="num">Bloqueado</th><th class="num">Beneficio</th><th class="num sd">Saldo</th></tr></thead><tbody>'+rows.map(function(r){return tr(r)}).join("")+tr({c:"Total",ing:T.ing,ret:T.ret,blq:T.blq,ben:T.ben,sal:T.sal},"tt")+'</tbody></table></div>';
+  var ph=0,pend=0;DT.bets.forEach(function(b){if(b.blq>0){if(b.est==="Liquidada")ph+=b.blq;else if(b.est!=="Propuesta")pend+=b.blq}});
+  var note=ph>=1?'<div class="dwarn"><b>\u26a0 Dato a revisar:</b> la hoja cuenta '+fE(T.blq,2)+' bloqueados, pero solo '+fE(pend,2)+' son de apuestas pendientes. Los otros '+fE(ph,2)+' est\u00e1n en filas ya liquidadas que siguen mostrando importe bloqueado.</div>':'';
+  return{html:html+note,rows:rows,tot:T,blq:T.blq,bf:rows.filter(function(r){return/^betfair/i.test(r.c)}).reduce(function(s,r){return s+r.blq},0)};
 }
-function capHover(R){var svg=$("dcps");if(!svg||!R.rows)return;svg.querySelectorAll(".dbar").forEach(function(g){var r=R.rows[+g.getAttribute("data-i")];g.onmousemove=function(ev){tip('<b>'+esc(r.c)+'</b><div class="tr"><i style="background:'+C.blue+'"></i>Disponible<b>'+fE(r.dis)+'</b></div><div class="tr"><i style="background:'+C.orange+'"></i>Bloqueado<b>'+fE(r.blq)+'</b></div>'+(Math.abs(r.desc)>=0.5?'<div class="tm2">⚠ Descuadre real − teórico: '+fE(r.desc,1)+'</div>':''),ev)};g.onmouseleave=untip})}
 
 /* ---------- 5. cuándo se libera el dinero ---------- */
 function release(DT){
@@ -840,51 +823,18 @@ function release(DT){
 }
 function relHover(R){var svg=$("drls");if(!svg||!R.days)return;svg.querySelectorAll(".dbar").forEach(function(g){var d=R.days[+g.getAttribute("data-i")];g.onmousemove=function(ev){tip('<b>'+DIA[d.d.getDay()]+' '+dLbl(d.d)+'</b><div class="tr"><i style="background:'+C.blue+'"></i>Casas<b>'+fE(d.cs)+'</b></div><div class="tr"><i style="background:'+C.orange+'"></i>Betfair<b>'+fE(d.bf)+'</b></div>',ev)};g.onmouseleave=untip})}
 
-/* ---------- 6. agenda 7 días ---------- */
-function agenda(){
-  var T=(typeof TAREAS!=="undefined"?TAREAS:[]),FBx=(typeof FB!=="undefined"?FB:{}),now=ZT(),today=day0(now),done=function(t){return t.hecho||(FBx["t"+t.id]||{}).estado==="hecho"};
-  var items=T.filter(function(t){return!done(t)&&t.due}).map(function(t){var d=new Date(t.due);return{t:t,d:d,k:Math.round((day0(d)-today)/MS)}}).filter(function(x){return!isNaN(x.d)&&x.k<=6});
-  items.sort(function(a,b){return a.d-b.d});
-  var cols=[{h:"Vencidas",c:"od",it:[]}];for(var i=0;i<7;i++){var d=new Date(today.getTime()+i*MS);cols.push({h:(i===0?"Hoy":i===1?"Mañana":DIA[d.getDay()]+" "+d.getDate()),c:"",it:[]})}
-  items.forEach(function(x){(x.k<0?cols[0]:cols[x.k+1]).it.push(x)});
-  var tm={"Dinero real":"rl","Freebet":"frb","Liquidar":"lq","Esperar":"es"};
-  var out=cols.filter(function(c,i){return i>0||c.it.length}).map(function(c){
-    var lst=c.it.slice(0,6).map(function(x){var hh=x.d.getHours()===23&&x.d.getMinutes()===59?"":String(x.d.getHours()).padStart(2,"0")+":"+String(x.d.getMinutes()).padStart(2,"0");
-      return'<li><span class="ah">'+hh+'</span><span class="tm '+(tm[x.t.tipo]||"es")+'">'+esc(x.t.tipo||"")+'</span><span class="at"><b>'+esc(x.t.of||"")+'</b> '+esc(String(x.t.t||"").slice(0,92))+(String(x.t.t||"").length>92?"…":"")+'</span></li>'}).join("");
-    var more=c.it.length>6?'<li class="mut">+ '+(c.it.length-6)+' más</li>':"";
-    return'<div class="acol '+c.c+'"><div class="ach"><b>'+c.h+'</b><span>'+c.it.length+'</span></div><ul>'+(lst||'<li class="mut">Nada pendiente</li>')+more+'</ul></div>'}).join("");
-  return{html:'<div class="agen">'+out+'</div>',n:items.length,od:cols[0].it.length};
-}
-
-/* ---------- lectura automática ---------- */
-function reading(DT,A,R){
-  var L=[],per=S.per==="30"?"los últimos 30 días":S.per==="90"?"los últimos 90 días":"todo el periodo";
-  var ok=function(t){return'<span class="ic ok">▲</span><span class="tx">'+t+'</span>'},wr=function(t){return'<span class="ic wr">▼</span><span class="tx">'+t+'</span>'},nt=function(t){return'<span class="ic">●</span><span class="tx">'+t+'</span>'};
-  if(!A.liq.length)return'<li>'+nt('No hay apuestas liquidadas en '+per+'.')+'</li>';
-  L.push((A.tot>=0?ok:wr)('<b>'+fE(A.tot,1)+'</b> en '+per+': '+fE(A.totOf,1)+' con oferta ('+A.ofs.length+' ofertas, '+pct(A.ofs.length?A.pos/A.ofs.length:0)+' en positivo) y '+fE(A.totSin,1)+' sin oferta ('+A.sins.length+' apuestas).'));
-  if(A.sins.length>=5&&A.sdSin>A.sdOf*1.5)L.push(nt('Las apuestas sin oferta son el componente más volátil: desviación de ±'+fE(A.sdSin,0,1).replace(" €","")+' € por apuesta frente a ±'+fE(A.sdOf,0,1).replace(" €","")+' € por oferta.'));
-  var cg=groups(DT,A).rows.filter(function(r){return r.n>=3});
-  var byAvg=cg.slice().sort(function(a,b){return b.avg-a.avg});
-  if(S.dim==="casa"&&byAvg.length>=2){var b=byAvg[0],w=byAvg[byAvg.length-1];L.push(nt('Por oferta, la casa que más rinde es <b>'+esc(b.lab)+'</b> ('+fE(b.avg,1)+', '+b.n+' ofertas) y la que menos <b>'+esc(w.lab)+'</b> ('+fE(w.avg,1)+', '+w.n+').'))}
-  else if(byAvg.length>=2){var b2=byAvg[0],w2=byAvg[byAvg.length-1];L.push(nt('Por oferta, el tipo que más rinde es <b>'+esc(b2.lab)+'</b> ('+fE(b2.avg,1)+', '+b2.n+' ofertas) y el que menos <b>'+esc(w2.lab)+'</b> ('+fE(w2.avg,1)+', '+w2.n+').'))}
-  var byC={};A.ofs.forEach(function(o){byC[o.ck]=(byC[o.ck]||0)+o.q});var cs=Object.keys(byC).map(function(k){return[k,byC[k]]}).sort(function(a,b){return b[1]-a[1]}),posT=cs.reduce(function(s,x){return s+Math.max(0,x[1])},0);
-  if(cs.length>=3&&posT>0){var t3=cs.slice(0,3).reduce(function(s,x){return s+Math.max(0,x[1])},0);L.push(nt('Las 3 casas con más beneficio ('+cs.slice(0,3).map(function(x){return esc(DT.names[x[0]]||x[0])}).join(", ")+') concentran el <b>'+pct(t3/posT)+'</b> del beneficio positivo.'))}
-  var dm=dumb(DT,A);if(dm.sum&&dm.sum.p>=30){L.push(nt('En las \u00faltimas '+dm.sum.n+' ofertas finalizadas con potencial anotado: cobrado <b>'+fE(dm.sum.r,1,0)+'</b> frente a <b>'+fE(dm.sum.p,1,0)+'</b> de potencial ('+pct(dm.sum.r/dm.sum.p)+').'))}
-  if(R&&R.total>0){var first=null;R.days.forEach(function(d,i){if(!first&&d.bf+d.cs>0)first={i:i,d:d}});var when=first?(first.i===0?"hoy":first.i===1?"ma\u00f1ana":DIA[first.d.d.getDay()]+" "+first.d.d.getDate()):"";L.push(nt('Hay <b>'+fE(R.total,0,0)+'</b> bloqueados en apuestas pendientes'+(first?'; el primer desbloqueo es '+when+' ('+fE(first.d.bf+first.d.cs,0,0)+')':'')+(R.bfFree?' y ahora tienes <b>'+fE(R.bfFree,0,0)+'</b> libres en Betfair.':'.')))}
-  return L.map(function(x){return'<li>'+x+'</li>'}).join("");
-}
-
 /* ---------- KPIs ---------- */
-function kpis(DT,A,R){
-  var RSx=(typeof RS!=="undefined")?RS:null,pv=prevTotal(DT),wks=Math.max(1,(A.cut?(day0(ZT())-A.cut)/MS:(A.liq.length?(day0(ZT())-day0(new Date(Math.min.apply(null,A.liq.map(function(b){return b.liq.getTime()})))))/MS+1:1))/7);
-  var fb=0;(typeof D!=="undefined"?D:[]).forEach(function(d){if(d.estado!=="D"&&d.estado!=="F")fb+=(+d.pend||0)});
+function kpis(DT,A,K){
+  var pv=prevTotal(DT),td=day0(ZT()),days;
+  if(A.cut){var end=A.to&&A.to<td?A.to:new Date(td.getTime()+MS);days=Math.max(1,(end-A.cut)/MS)}
+  else days=A.liq.length?(td-day0(new Date(Math.min.apply(null,A.liq.map(function(b){return b.liq.getTime()})))))/MS+1:1;
+  var wks=Math.max(1,days)/7;
   var T=[
-    {l:"Beneficio",v:fE(A.tot,1,0),c:A.tot>=0?"pos":"neg",s:pv==null?"todo el historial":(pv===0?"sin periodo anterior":(A.tot-pv>=0?"▲ ":"▼ ")+fE(A.tot-pv,1,0)+" vs periodo anterior"),hero:1},
+    {l:"Beneficio",v:fE(A.tot,1,0),c:A.tot>=0?"pos":"neg",s:pv==null?"todo el historial":(pv===0?"sin mes anterior":(A.tot-pv>=0?"\u25b2 ":"\u25bc ")+fE(A.tot-pv,1,0)+" vs mes anterior"),hero:1},
     {l:"Ritmo semanal",v:fE(A.tot/wks,1,0),c:A.tot>=0?"pos":"neg",s:"media por semana"},
     {l:"Ofertas cerradas",v:String(A.ofs.length),c:"",s:A.ofs.length?pct(A.pos/A.ofs.length)+" en positivo":"–"},
     {l:"Beneficio por oferta",v:fE(A.mean,1,1),c:A.mean>=0?"pos":"neg",s:"mediana "+fE(A.med,1,1)},
-    {l:"Bloqueado ahora",v:R?fE(R.total,0,0):"–",c:"",s:R&&R.bfFree?"Betfair libre "+fE(R.bfFree,0,0):""},
-    {l:"Freebets por usar",v:String(fb),c:"",s:"según la pestaña Ofertas"}];
+    {l:"Bloqueado ahora",v:K&&K.tot?fE(K.blq,0,0):"–",c:"",s:K&&K.tot?"Betfair "+fE(K.bf,0,0)+" \u00b7 casas "+fE(K.blq-K.bf,0,0):""}];
   return T.map(function(k){return'<div class="dk'+(k.hero?" hero":"")+'"><span class="l">'+k.l+'</span><b class="'+k.c+'">'+k.v+'</b><span class="s">'+esc(k.s)+'</span></div>'}).join("");
 }
 
@@ -893,27 +843,24 @@ var CACHE={};
 function paint(id,R,subHtml){var v=view(id);return(v==="t"?R.tab:R.html)+(v==="t"?"":(R.legend||""))+(subHtml||"")}
 function ddraw(){
   var root=$("v-dash");if(!root||root.hidden)return;
-  var DT=load(),A=agg(DT),R=release(DT);
-  $("dsub").textContent=(typeof AP!=="undefined"&&AP.length?"Calculado en vivo con las apuestas, ofertas, tareas y resumen de la hoja.":"Conecta con la hoja para ver tus datos.");
-  document.querySelectorAll("#dper button").forEach(function(b){b.classList.toggle("on",b.dataset.v===S.per)});
-  $("dlect").innerHTML=reading(DT,A,R);
-  $("dkpis").innerHTML=kpis(DT,A,R);
-  var Ag=agenda();
-  /* fase 1: estructura (para medir el ancho real de cada tarjeta) */
+  var DT=load(),ms=months(DT);
+  if(S.per!=="all"&&ms.indexOf(S.per)<0)S.per="all";
+  var A=agg(DT),R=release(DT),K=casas(DT),yrs={};ms.forEach(function(k){yrs[k.slice(0,4)]=1});var multi=Object.keys(yrs).length>1;
+  $("dsub").textContent=(typeof AP!=="undefined"&&AP.length?"Calculado en vivo con las apuestas, ofertas y resumen de la hoja.":"Conecta con la hoja para ver tus datos.");
+  $("dper").innerHTML=ms.map(function(k){var n=+k.slice(5)-1;return'<button type="button" data-v="'+k+'" class="'+(S.per===k?"on":"")+'">'+MESN[n]+(multi?" "+k.slice(0,4):"")+'</button>'}).join("")+'<button type="button" data-v="all" class="'+(S.per==="all"?"on":"")+'">Todo</button>';
+  $("dkpis").innerHTML=kpis(DT,A,K);
   var shell=function(id,title,sub,tools,wide){return'<section class="dcard'+(wide?" wide":"")+'" id="dc-'+id+'"><div class="dhd"><div><h3>'+esc(title)+'</h3><p>'+sub+'</p></div><div class="dtl">'+tools+'</div></div><div class="dbody" id="db-'+id+'"><div id="d'+id+'"></div></div></section>'};
   $("dgrid").innerHTML=
-    shell("cv","Curva de beneficio",'Beneficio liquidado por d\u00eda de cierre. Los bonos y ajustes no cuentan.',toggles("curve",[["acc","Acumulado"],["sem","Por semana"]],S.curve)+vtog("cv"),1)+
-    shell("br","D\u00f3nde ganas",'Beneficio de las ofertas cerradas, agrupado por '+(S.dim==="casa"?"casa":"tipo de oferta")+'. El n\u00famero gris es el de ofertas.',toggles("dim",[["casa","Casa"],["tipo","Tipo"]],S.dim)+toggles("met",[["tot","Total"],["avg","Por oferta"]],S.met)+vtog("br"))+
-    shell("db","Potencial frente a cobrado",'Ofertas finalizadas: beneficio potencial anotado en la hoja frente a lo cobrado.',vtog("db"))+
-    shell("cp","Capital por casa",'Dinero disponible y bloqueado en cada casa, seg\u00fan el Resumen de la hoja.',vtog("cp"))+
-    shell("rl","Cu\u00e1ndo se libera el dinero",'Dinero bloqueado en apuestas pendientes, por d\u00eda de inicio del evento (8 d\u00edas).',vtog("rl"))+
-    '<section class="dcard wide" id="dc-ag"><div class="dhd"><div><h3>Agenda de 7 d\u00edas</h3><p>'+(Ag.od?'<b class="neg">'+Ag.od+' vencida'+(Ag.od>1?"s":"")+'</b> \u00b7 '+Ag.n+' tareas en los pr\u00f3ximos 7 d\u00edas.':Ag.n+' tareas pendientes en los pr\u00f3ximos 7 d\u00edas.')+'</p></div></div><div class="dbody">'+Ag.html+'</div></section>';
-  /* fase 2: gr\u00e1ficos con el ancho ya conocido */
-  var cv=curve(DT,A),br=bars(DT,A),db=dumb(DT,A),Cap=capital(DT);
-  var put=function(id,R2,extra){$("d"+id).innerHTML=paint(id,R2,extra)};
-  put("cv",cv);put("br",br);put("db",db);put("cp",Cap,Cap.note);
-  put("rl",R,(R.late?'<div class="mut sm">M\u00e1s adelante: '+fE(R.late,0,0)+'.</div>':'')+(R.nod?'<div class="mut sm">Sin fecha de evento: '+fE(R.nod,0,0)+'.</div>':''));
-  if(view("cv")==="g"&&S.curve==="acc")curveHover(cv);if(view("br")==="g")barsHover(br);if(view("db")==="g")dumbHover(db);if(view("cp")==="g")capHover(Cap);if(view("rl")==="g")relHover(R);
+    shell("cv","Curva de beneficio",'Beneficio liquidado por d\u00eda de cierre'+(S.per==="all"?"":" en "+MESN[+S.per.slice(5)-1].toLowerCase())+'. Los bonos y ajustes no cuentan.',toggles("curve",[["acc","Acumulado"],["sem","Por semana"]],S.curve),1)+
+    shell("ca","Estado de las casas",'Ingresado, retirado, bloqueado, beneficio y saldo de cada casa seg\u00fan el Resumen de la hoja (estado actual).','',1)+
+    shell("br","D\u00f3nde ganas",'Beneficio de las ofertas cerradas, agrupado por casa. El n\u00famero gris es el de ofertas.','')+
+    shell("rl","Cu\u00e1ndo se libera el dinero",'Dinero bloqueado en apuestas pendientes, por d\u00eda de inicio del evento (8 d\u00edas).',vtog("rl"));
+  var cv=curve(DT,A),br=bars(DT,A);
+  $("dcv").innerHTML=cv.html+(cv.legend||"");
+  $("dca").innerHTML=K.html;
+  $("dbr").innerHTML=br.html+(br.legend||"");
+  $("drl").innerHTML=paint("rl",R,(R.late?'<div class="mut sm">M\u00e1s adelante: '+fE(R.late,0,0)+'.</div>':'')+(R.nod?'<div class="mut sm">Sin fecha de evento: '+fE(R.nod,0,0)+'.</div>':''));
+  if(S.curve==="acc")curveHover(cv);barsHover(br);if(view("rl")==="g")relHover(R);
 }
 function bind(){
   var root=$("v-dash");if(!root)return;
