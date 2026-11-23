@@ -122,7 +122,7 @@ main[hidden]{display:none}
 .rsbtn{margin-left:10px;font:inherit;font-size:11.5px;background:var(--chip);color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:2px 10px;cursor:pointer;vertical-align:middle}
 
 /* ===== Dashboard ===== */
-#dper{max-width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}#dper button{white-space:nowrap}.dtw.dcw{max-height:none}.dcas td.sd,.dcas th.sd{font-weight:800;background:#16222b;color:#f5ff00}.dcas tr.tt td{border-top:2px solid var(--line);font-weight:700}
+#dper{display:inline-flex}.dsel2{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-size:12.5px;font-weight:700}.dsel2 select{min-width:170px;font-weight:700;color:var(--ink);cursor:pointer}.dtw.dcw{max-height:372px;overflow:auto}.dcas thead th{position:sticky;top:0;z-index:2;background:var(--card)}.dcas tr.tt td{position:sticky;bottom:0;z-index:2;background:#131f27}.dcas td.sd,.dcas th.sd{font-weight:800;background:#16222b;color:#f5ff00}.dcas tr.tt td{border-top:2px solid var(--line);font-weight:700}
 #v-dash .dtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 14px}
 .dseg{display:inline-flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;background:var(--card)}
 .dseg button{background:none;border:0;color:var(--mut);font:inherit;font-size:12.5px;font-weight:700;padding:5px 12px;cursor:pointer}
@@ -176,7 +176,7 @@ body.lector #dc-ag{display:none}
 <main id="v-dash" hidden>
 <h1>Dashboard <em>decisiones</em></h1>
 <div class="sub" id="dsub"></div>
-<div class="dtools"><div class="dseg" id="dper" role="group" aria-label="Periodo"></div></div>
+<div class="dtools"><div id="dper"></div></div>
 <div class="dkpis" id="dkpis"></div>
 <div class="dgrid" id="dgrid"></div>
 <div class="foot" style="margin:10px 0 22px">Todo se calcula en vivo con la hoja: beneficio por fecha de liquidación de cada apuesta (los bonos y ajustes no cuentan, Regla 11) y casa según la pestaña Ofertas. «Sin oferta» = O-000 y O-00A. La tabla de casas es el estado actual según el Resumen de la hoja y no depende del filtro de periodo.</div>
@@ -687,7 +687,7 @@ function load(){
 }
 function range(){if(!/^\d{4}-\d{2}$/.test(S.per))return{from:null,to:null};var y=+S.per.slice(0,4),m=+S.per.slice(5)-1;return{from:new Date(y,m,1),to:new Date(y,m+1,1)}}
 function cutoff(){return range().from}
-function months(DT){var set={};DT.bets.forEach(function(b){if(b.est==="Liquidada"&&b.liq&&b.q!=null){var k=b.liq.getFullYear()+"-"+("0"+(b.liq.getMonth()+1)).slice(-2);set[k]=1}});var n=ZT(),ck=n.getFullYear()+"-"+("0"+(n.getMonth()+1)).slice(-2);set[ck]=1;return Object.keys(set).sort()}
+function months(DT){var mn=null;DT.bets.forEach(function(b){if(b.est==="Liquidada"&&b.liq&&b.q!=null){var k=b.liq.getFullYear()*12+b.liq.getMonth();if(mn===null||k<mn)mn=k}});var n=ZT(),cur=n.getFullYear()*12+n.getMonth();if(mn===null)mn=cur;var o=[];for(var k=mn;k<=cur;k++){o.push(Math.floor(k/12)+"-"+("0"+(k%12+1)).slice(-2))}return o}
 
 /* ---------- agregados ---------- */
 function agg(DT){
@@ -847,7 +847,7 @@ function ddraw(){
   if(S.per!=="all"&&ms.indexOf(S.per)<0)S.per="all";
   var A=agg(DT),R=release(DT),K=casas(DT),yrs={};ms.forEach(function(k){yrs[k.slice(0,4)]=1});var multi=Object.keys(yrs).length>1;
   $("dsub").textContent=(typeof AP!=="undefined"&&AP.length?"Calculado en vivo con las apuestas, ofertas y resumen de la hoja.":"Conecta con la hoja para ver tus datos.");
-  $("dper").innerHTML=ms.map(function(k){var n=+k.slice(5)-1;return'<button type="button" data-v="'+k+'" class="'+(S.per===k?"on":"")+'">'+MESN[n]+(multi?" "+k.slice(0,4):"")+'</button>'}).join("")+'<button type="button" data-v="all" class="'+(S.per==="all"?"on":"")+'">Todo</button>';
+  $("dper").innerHTML='<label class="dsel2">Periodo <select id="dpsel" aria-label="Periodo"><option value="all"'+(S.per==="all"?" selected":"")+'>Todo</option>'+ms.slice().reverse().map(function(k){var n=+k.slice(5)-1;return'<option value="'+k+'"'+(S.per===k?" selected":"")+'>'+MESN[n]+" "+k.slice(0,4)+'</option>'}).join("")+'</select></label>';
   $("dkpis").innerHTML=kpis(DT,A,K);
   var shell=function(id,title,sub,tools,wide){return'<section class="dcard'+(wide?" wide":"")+'" id="dc-'+id+'"><div class="dhd"><div><h3>'+esc(title)+'</h3><p>'+sub+'</p></div><div class="dtl">'+tools+'</div></div><div class="dbody" id="db-'+id+'"><div id="d'+id+'"></div></div></section>'};
   $("dgrid").innerHTML=
@@ -864,6 +864,7 @@ function ddraw(){
 }
 function bind(){
   var root=$("v-dash");if(!root)return;
+  root.addEventListener("change",function(e){if(e.target&&e.target.id==="dpsel"){S.per=e.target.value;ddraw()}});
   root.addEventListener("click",function(e){var b=e.target.closest("button[data-v]");if(!b)return;var g=b.dataset.g,v=b.dataset.v;
     if(!g){S.per=v}else if(g==="curve")S.curve=v;else if(g==="dim")S.dim=v;else if(g==="met")S.met=v;else if(g.indexOf("v:")===0)S.view[g.slice(2)]=v;else return;ddraw()});
   var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(ddraw,150)});
