@@ -149,7 +149,8 @@ main[hidden]{display:none}
 .dwarn{margin-top:10px;padding:9px 12px;border:1px solid #6b5316;background:#1d1a0e;color:#ecdca8;border-radius:8px;font-size:12.5px;line-height:1.45}.dwarn b{color:#fab219}
 @media(max-width:900px){.dgrid{grid-template-columns:1fr}.dk b{font-size:22px}.dk.hero b{font-size:26px}}
 
-.prof .out{margin-left:auto;background:transparent;color:var(--mut)}.prof button[disabled]{cursor:default}.prof button[disabled]:hover{border-color:var(--acc)}
+.prof .out{margin-left:auto;background:transparent;color:var(--mut)}.prof .pb{display:flex;align-items:center;gap:8px;min-width:0;overflow-x:auto;scrollbar-width:none}.prof .pb::-webkit-scrollbar{display:none}.prof .pb button,.prof .pl,.prof .out{flex:none;white-space:nowrap}
+@media(max-width:760px){.app>.content{display:contents}.content>*{min-width:0}.content>main{width:100%}.prof{order:-2;gap:6px;padding:6px 12px}.side{order:-1}.prof .pl{font-size:12px;letter-spacing:0;text-transform:none;margin-right:0}.prof .pb{gap:6px}.prof button{padding:4px 11px;font-size:12px}}.prof button[disabled]{cursor:default}.prof button[disabled]:hover{border-color:var(--acc)}
 body.lector #dc-ag{display:none}
 #login{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 #login[hidden]{display:none}
@@ -236,10 +237,10 @@ try{localStorage.setItem("mb_key",k);if(j.perfil)localStorage.setItem("mb_prof",
 KEY=k;CONFIG.token=k;if(j.perfil&&j.perfil!==PROF){location.reload();return}
 document.getElementById("login").hidden=true;bt.disabled=false;live()}
 catch(x){e.textContent="Sin conexi\u00f3n con el servidor. Int\u00e9ntalo de nuevo.";bt.disabled=false}};
-function buildProf(ps){const b=document.getElementById("prof");let h='<span class="pl">Perfil</span>';
+function buildProf(ps){const b=document.getElementById("prof");let h='<span class="pl">Perfil:</span><div class="pb">';
 if(ROLE==="admin"&&ps.length>1)ps.forEach(p=>{h+='<button data-p="'+escH(p.id)+'" class="'+(p.id===PROF?"on":"")+'">'+escH(p.nombre)+'</button>'});
 else h+='<button class="on" disabled>'+escH(ps[0].nombre)+'</button>';
-h+='<button class="out" id="logout">Salir</button>';b.innerHTML=h;
+h+='</div><button class="out" id="logout">Salir</button>';b.innerHTML=h;
 b.querySelectorAll("button[data-p]").forEach(x=>{x.onclick=()=>{if(x.dataset.p!==PROF)setProf(x.dataset.p)}});document.getElementById("logout").onclick=logout}
 function applyAccess(j){ROLE=j.role;TABS=j.tabs;PROFS={};j.perfiles.forEach(p=>{PROFS[p.id]=p.nombre});
 document.body.classList.toggle("lector",ROLE!=="admin");
