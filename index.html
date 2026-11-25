@@ -149,8 +149,8 @@ main[hidden]{display:none}
 .dwarn{margin-top:10px;padding:9px 12px;border:1px solid #6b5316;background:#1d1a0e;color:#ecdca8;border-radius:8px;font-size:12.5px;line-height:1.45}.dwarn b{color:#fab219}
 @media(max-width:900px){.dgrid{grid-template-columns:1fr}.dk b{font-size:22px}.dk.hero b{font-size:26px}}
 
-.prof .out{margin-left:auto;background:transparent;color:var(--mut)}.prof .pb{display:flex;align-items:center;gap:8px;min-width:0;overflow-x:auto;scrollbar-width:none}.prof .pb::-webkit-scrollbar{display:none}.prof .pb button,.prof .pl,.prof .out{flex:none;white-space:nowrap}
-@media(max-width:760px){.app>.content{display:contents}.content>*{min-width:0}.content>main{width:100%}.prof{order:-2;gap:6px;padding:6px 12px}.side{order:-1}.prof .pl{font-size:12px;letter-spacing:0;text-transform:none;margin-right:0}.prof .pb{gap:6px}.prof button{padding:4px 11px;font-size:12px}}.prof button[disabled]{cursor:default}.prof button[disabled]:hover{border-color:var(--acc)}
+.prof .out{margin-left:auto;background:transparent;color:var(--mut)}.side .nv{display:none}.prof .pb{display:flex;align-items:center;gap:8px;min-width:0;overflow-x:auto;scrollbar-width:none}.prof .pb::-webkit-scrollbar{display:none}.prof .pb button,.prof .pl,.prof .out{flex:none;white-space:nowrap}
+@media(max-width:760px){.app>.content{display:contents}.content>*{min-width:0}.content>main{width:100%}.side .nv{display:flex;position:sticky;flex:none;align-items:center;justify-content:center;width:38px;align-self:stretch;color:var(--acc);font-size:26px;font-weight:900;line-height:1;opacity:0;pointer-events:none;transition:opacity .15s;z-index:2}.side .nv.r{right:0;margin-left:-38px;background:linear-gradient(to right,rgba(5,10,13,0),#050A0D 62%)}.side .nv.l{left:0;margin-right:-38px;background:linear-gradient(to left,rgba(5,10,13,0),#050A0D 62%)}.side.mr .nv.r,.side.ml .nv.l{opacity:1}.side{scrollbar-width:none}.side::-webkit-scrollbar{display:none}.prof{order:-2;gap:6px;padding:6px 12px}.side{order:-1}.prof .pl{font-size:12px;letter-spacing:0;text-transform:none;margin-right:0}.prof .pb{gap:6px}.prof button{padding:4px 11px;font-size:12px}}.prof button[disabled]{cursor:default}.prof button[disabled]:hover{border-color:var(--acc)}
 body.lector #dc-ag{display:none}
 #login{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 #login[hidden]{display:none}
@@ -164,7 +164,7 @@ body.lector #dc-ag{display:none}
 #login .err{min-height:20px;margin-top:10px;color:var(--bad);font-size:13px}
 #banner{position:sticky;top:0;z-index:60;background:#3a2a05;color:#ffd98a;border-bottom:1px solid #6b5316;padding:10px 16px;font-size:13.5px}
 #banner[hidden]{display:none}
-</style></head><body><div class="app"><nav class="side"><div class="brand">SaaS <b>Matched Betting</b></div><a data-v="oab">Seguimiento ofertas</a><a data-v="ofertas">Panel de ofertas</a><a data-v="tareas">Lista de tareas <span class="n" id="navn"></span></a><a data-v="apuestas">Apuestas</a><a data-v="resumen">Resumen</a><a data-v="dash">Dashboard</a></nav><div class="content"><div class="prof" id="prof"><span class="pl">Perfil</span></div><main id="v-ofertas">
+</style></head><body><div class="app"><nav class="side"><span class="nv l" aria-hidden="true">‹</span><div class="brand">SaaS <b>Matched Betting</b></div><a data-v="oab">Seguimiento ofertas</a><a data-v="ofertas">Panel de ofertas</a><a data-v="tareas">Lista de tareas <span class="n" id="navn"></span></a><a data-v="apuestas">Apuestas</a><a data-v="resumen">Resumen</a><a data-v="dash">Dashboard</a><span class="nv r" aria-hidden="true">›</span></nav><div class="content"><div class="prof" id="prof"><span class="pl">Perfil</span></div><main id="v-ofertas">
 <h1>Panel de <em>ofertas</em></h1>
 <div class="sub">Cargando datos de la hoja…</div>
 <div class="kpis" id="kpis"></div>
@@ -875,4 +875,12 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 })();
 
 try{if(location.hash=="#dash"&&!document.getElementById("v-dash").hidden)ddraw()}catch(e){}
+</script><script>
+(function(){var s=document.querySelector(".side");if(!s)return;
+function upd(){var more=s.scrollLeft+s.clientWidth<s.scrollWidth-4;s.classList.toggle("mr",more);s.classList.toggle("ml",s.scrollLeft>4)}
+s.addEventListener("scroll",upd,{passive:true});window.addEventListener("resize",upd);
+try{new MutationObserver(upd).observe(s,{subtree:true,attributes:true,attributeFilter:["style"]})}catch(e){}
+var peeked=false;function peek(){if(peeked||s.scrollWidth<=s.clientWidth+8||s.scrollLeft>0)return;peeked=true;try{if(sessionStorage.getItem("mb_peek"))return;sessionStorage.setItem("mb_peek","1")}catch(e){}
+if(!window.matchMedia||!matchMedia("(max-width:760px)").matches)return;s.scrollTo({left:70,behavior:"smooth"});setTimeout(function(){s.scrollTo({left:0,behavior:"smooth"})},700)}
+setTimeout(upd,300);setTimeout(function(){upd();peek()},2200)})();
 </script></body></html>
