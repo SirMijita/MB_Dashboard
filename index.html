@@ -478,7 +478,7 @@ const g=[["Estado",E],["Alta",d&&d.fecha||"–"],["Dificultad",dif],["Beneficio 
 const note=C.note?`<p class="oa-note">${oaX(C.note)}</p>`:`<p class="oa-note">La descripción y los T&amp;C de esta oferta están en la pestaña Ofertas de la hoja (columna F) y todavía no están cargados en el panel.</p>`;
 return `<details class="oa-day oa-info" open><summary>Información de la oferta<small>condiciones, valoración y estado · datos de la pestaña Ofertas</small></summary><div class="oa-inf"><div class="oa-ig">${g}</div>${note}</div></details>`}
 function oaCardHtml(id){const d=oaInfo(id),C0=OA_CFG[id]||{},C={...C0,name:d.pn||C0.name,sub:d.ps||C0.sub,note:d.pt||C0.note},rows=(OA_X[id]||[]).slice().sort((a,b)=>a.row-b.row),G=[];let cur=null;
-rows.forEach(r=>{if(r.g=="Back"){cur={back:r,lays:[]};G.push(cur)}else if(r.g=="Lay"&&cur)cur.lays.push(r)});
+rows.forEach(r=>{if(r.g=="Back"&&cur&&/freebet/i.test(cur.back.h)&&!/freebet/i.test(r.h)&&r.d===cur.back.d){cur.lays.push(r)}else if(r.g=="Back"){cur={back:r,lays:[]};G.push(cur)}else if(r.g=="Lay"&&cur)cur.lays.push(r)});
 const isBo=g=>!/freebet/i.test(g.back.h)&&/profit boost/i.test(g.back.e),isFb=g=>/freebet/i.test(g.back.h)||isBo(g),GM=G.filter(g=>!isFb(g)),GF=G.filter(isFb);
 const mk=(L,pre)=>{let t="";L.forEach((g,i)=>{const lb=pre?(isBo(g)?"BO":pre):("A"+(i+1));t+=oaRow(g.back,lb,true)+g.lays.map(l=>oaRow(l,lb,false)).join("")});return t};
 const trM=mk(GM),trF=mk(GF,"FB");
