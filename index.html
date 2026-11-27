@@ -164,7 +164,16 @@ body.lector #dc-ag{display:none}
 #login .err{min-height:20px;margin-top:10px;color:var(--bad);font-size:13px}
 #banner{position:sticky;top:0;z-index:60;background:#3a2a05;color:#ffd98a;border-bottom:1px solid #6b5316;padding:10px 16px;font-size:13.5px}
 #banner[hidden]{display:none}
-</style></head><body><div class="app"><nav class="side"><span class="nv l" aria-hidden="true">‹</span><div class="brand">SaaS <b>Matched Betting</b></div><a data-v="oab">Seguimiento ofertas</a><a data-v="ofertas">Panel de ofertas</a><a data-v="tareas">Lista de tareas <span class="n" id="navn"></span></a><a data-v="apuestas">Apuestas</a><a data-v="resumen">Resumen</a><a data-v="dash">Dashboard</a><span class="nv r" aria-hidden="true">›</span></nav><div class="content"><div class="prof" id="prof"><span class="pl">Perfil</span></div><main id="v-ofertas">
+
+
+.rc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;min-width:0}
+.rc .ic{flex:none;width:54px;height:54px;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center}.rc .ic svg{width:34px;height:34px}
+.rc .tx{min-width:0}.rc .l{color:var(--mut);font-size:12.5px;font-weight:700}.rc b{display:block;font-size:26px;line-height:1.15;font-variant-numeric:tabular-nums}.rc .s{color:var(--mut);font-size:12px}
+.rc.g{border-color:var(--acc)}.rc.h b{color:var(--bad)}
+.rm{background:#0d1519;border:1px solid var(--line);border-radius:12px;padding:10px 12px}.rm+.rm{margin-top:10px}.rmh{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin:0 2px 8px;font-size:13px}.rmh>b{font-size:14px}.rmh span{color:var(--mut);font-size:12.5px}.rmh span b{font-variant-numeric:tabular-nums}
+.rrow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}@media(max-width:900px){.rrow{grid-template-columns:1fr 1fr}}@media(max-width:480px){.rrow{grid-template-columns:1fr}}
+.rep{display:block;max-height:430px;overflow-y:auto;padding-right:4px;margin:6px 0 4px}.rc.lq.no{border-color:#7a2a22;background:#2a1412}.rc.lq.no b{color:var(--bad)}.rc.lq.ok{border-color:#1f6a4a;background:#0f2a1f}.rc.lq.ok b{color:var(--ok)}
+</style></head><body><div class="app"><nav class="side"><span class="nv l" aria-hidden="true">‹</span><div class="brand">SaaS <b>Matched Betting</b></div><a data-v="oab">Seguimiento ofertas</a><a data-v="ofertas">Panel de ofertas</a><a data-v="tareas">Lista de tareas <span class="n" id="navn"></span></a><a data-v="apuestas">Apuestas</a><a data-v="resumen">Dashboard</a><span class="nv r" aria-hidden="true">›</span></nav><div class="content"><div class="prof" id="prof"><span class="pl">Perfil</span></div><main id="v-ofertas">
 <h1>Panel de <em>ofertas</em></h1>
 <div class="sub">Cargando datos de la hoja…</div>
 <div class="kpis" id="kpis"></div>
@@ -174,14 +183,7 @@ body.lector #dc-ag{display:none}
 <div class="tw"><table><thead><tr id="th"></tr></thead><tbody id="tb"></tbody></table></div>
 <div class="foot">Beneficio potencial: valor de la columna H de la hoja (si es un rango, se ordena por el máximo). Esta primera versión es solo lectura; el siguiente paso es leer la hoja en vivo.</div>
 </main>
-<main id="v-dash" hidden>
-<h1>Dashboard <em>decisiones</em></h1>
-<div class="sub" id="dsub"></div>
-<div class="dtools"><div id="dper"></div></div>
-<div class="dkpis" id="dkpis"></div>
-<div class="dgrid" id="dgrid"></div>
-<div class="foot" style="margin:10px 0 22px">Todo se calcula en vivo con la hoja: beneficio por fecha de liquidación de cada apuesta (los bonos y ajustes no cuentan, Regla 11) y casa según la pestaña Ofertas. «Sin oferta» = O-000 y O-00A. La tabla de casas es el estado actual según el Resumen de la hoja y no depende del filtro de periodo.</div>
-</main>
+
 <div id="dtip" class="dtip" hidden></div>
 <main id="v-oab" hidden>
 <h1>Seguimiento <em>ofertas</em></h1>
@@ -199,12 +201,13 @@ body.lector #dc-ag{display:none}
 <div class="foot">Avisos construidos desde la pestaña Tareas de la hoja (solo las pendientes). Los plazos y las cuentas atrás se calculan con la hora de tu ordenador. Los partidos de fútbol se dan por terminados 105 minutos después del inicio (90 + 15 de descanso).</div>
 </main>
 <main id="v-resumen" class="rs" hidden>
-<h1>Resumen <em>ganancias</em></h1>
+<h1>Dashboard <em>ganancias</em></h1>
 <div class="sub" id="rsub"></div>
 <div class="rtop"><div class="mcol"><div class="mkpi"><span class="l">Beneficio del mes actual</span><b id="mbig">–</b><span class="s" id="msub"></span></div><div class="mkpi tot"><span class="l">Beneficio total</span><b id="tbig">–</b><span class="s" id="rtsub"></span></div></div><div class="mchart"><div id="mchart"></div><div id="dsel"></div></div></div>
-<h2>Apuestas sin oferta · semana actual</h2>
+<h2>Panel de transacciones semanal</h2>
 <div class="tw wscroll"><table class="atb wtb"><thead><tr id="wth"></tr><tr id="wth2"></tr></thead><tbody id="wtb"></tbody></table></div>
 <div id="wchk"></div><div class="foot" style="margin:6px 0 22px">Apuestas Back por casa y día de la semana en curso, leídas de la pestaña Apuestas. <b style="color:#4dd8ff">O</b> = apuesta de oferta · <b style="color:#2fd27f">F</b> = freebet realizada · <b style="color:#f5ff00">R</b> = dinero real: apuesta sin oferta (O-000 / O-00A). “-” = ninguna. Saldo teórico = lo que debería haber en la casa según nuestras apuestas. Resultado neto = lo que ganamos o perdemos con esa casa (apuestas liquidadas, Betfair incluida; sin bonos ni ajustes). Apostado = dinero real en apuestas de oferta y sin oferta (sin freebets).</div>
+<div id="rep" hidden><h2>Reparto neto</h2><div class="rep" id="repg"></div><div class="foot" id="repf"></div></div>
 <h2>Balance global</h2>
 <div class="kpis" id="rkpis"></div>
 <h2>Balance de los últimos 3 meses</h2>
@@ -212,6 +215,14 @@ body.lector #dc-ag{display:none}
 <h2>Estado de las casas</h2>
 <div class="tw"><table class="atb rtb"><thead><tr id="rth"></tr></thead><tbody id="rtb"></tbody></table></div>
 <div class="foot">Datos de la pestaña Resumen de la hoja. Beneficio por mes de liquidación de cada apuesta; los bonos y ajustes no cuentan en el beneficio. Hace falta estar conectado con la hoja.</div>
+<section id="v-dash" class="dsec">
+<h2>Dashboard <em>decisiones</em></h2>
+<div class="sub" id="dsub"></div>
+<div class="dtools"><div id="dper"></div></div>
+<div class="dkpis" id="dkpis"></div>
+<div class="dgrid" id="dgrid"></div>
+<div class="foot" style="margin:10px 0 22px">Todo se calcula en vivo con la hoja: beneficio por fecha de liquidación de cada apuesta (los bonos y ajustes no cuentan, Regla 11) y casa según la pestaña Ofertas. «Sin oferta» = O-000 y O-00A. La tabla de casas es el estado actual según el Resumen de la hoja y no depende del filtro de periodo.</div>
+</section>
 </main>
 <main id="v-apuestas" hidden>
 <h1>Mis <em>apuestas</em></h1>
@@ -521,8 +532,8 @@ if(rows.length){OA_ROWS=rows;oaRender();oaStatus("En vivo · "+rows.length+" apu
 else{OA_ROWS=OA_SNAP.rows.map(oaObj);oaRender();if(NEUT){oaStatus(CONFIG.url?"En vivo · perfil "+(PROFS[PROF]||"")+" · "+AP.length+" apuestas leídas de su hoja a las "+new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}):"Sin conexión con la hoja.",CONFIG.url?"ok":"w");return}oaStatus((CONFIG.url?"La hoja no devolvió apuestas de O-080.":"Sin conexión con la hoja.")+" Instantánea de las "+OA_SNAP.at+".","w")}}
 oaRender();oaStatus(NEUT?(CONFIG.url?"Cargando datos…":"Sin conexión con la hoja."):"Instantánea de las "+OA_SNAP.at+" · esperando datos de la hoja…","w");
 
-function show(v){if(TABS&&!TABS.includes(v))v=TABS[0];["ofertas","oab","tareas","apuestas","resumen","dash"].forEach(k=>{document.getElementById("v-"+k).hidden=k!=v});
-document.querySelectorAll(".side a").forEach(a=>a.classList.toggle("on",a.dataset.v==v));try{history.replaceState(null,"","#"+v)}catch(e){}window.scrollTo(0,0);if(v=="apuestas")adraw();if(v=="resumen")rdraw();if(v=="dash"&&window.ddraw)ddraw()}
+function show(v){if(v=="dash")v="resumen";if(TABS&&!TABS.includes(v))v=TABS[0];["ofertas","oab","tareas","apuestas","resumen"].forEach(k=>{document.getElementById("v-"+k).hidden=k!=v});
+document.querySelectorAll(".side a").forEach(a=>a.classList.toggle("on",a.dataset.v==v));try{history.replaceState(null,"","#"+v)}catch(e){}window.scrollTo(0,0);if(v=="apuestas")adraw();if(v=="resumen"){rdraw();if(window.ddraw)ddraw()}}
 document.querySelector(".side").onclick=e=>{const a=e.target.closest("a");if(a)show(a.dataset.v)};
 tdraw();setInterval(tdraw,60000);
 
@@ -532,12 +543,38 @@ const rf=(v,sg)=>(sg&&v>0?"+":"")+v.toFixed(2).replace(".",",").replace(/\B(?=(\
 const rc=v=>v>0.004?"pos":v<-0.004?"neg":"";
 let WALL=false,DSEL=null;
 function apDate(t){const m=String(t||"").match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);if(!m)return null;let y=m[3]?+m[3]:new Date().getFullYear();if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1])}
+
+var LQ=[];
+const REP_IC={cap:'<svg viewBox="0 0 48 48" fill="none" stroke="#F5FF00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 25c1-8 8-12 19-12s18 4 19 12"/><path d="M4 25h40v5H4z" fill="#F5FF00" fill-opacity=".2"/><path d="M6 30c5 3 11 5 18 5s13-2 18-5"/><circle cx="24" cy="21" r="3.6"/><path d="M24 19v5M22 21h4" stroke-width="1.8"/></svg>',
+boss:'<svg viewBox="0 0 48 48" fill="none" stroke="#4dd8ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="14" r="7"/><path d="M9 42c0-9 6-15 15-15s15 6 15 15z"/><path d="M21 27l3 4 3-4"/><path d="M24 31l-2 6 2 3 2-3z" fill="#4dd8ff"/></svg>',
+thief:'<svg viewBox="0 0 48 48" fill="none" stroke="#ff6b5e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20c0-7 6-12 15-12s15 5 15 12v3c0 8-6 14-15 14S9 31 9 23z"/><path d="M9 20h30v6H9z" fill="#ff6b5e" fill-opacity=".25"/><circle cx="18" cy="23" r="2" fill="#ff6b5e"/><circle cx="30" cy="23" r="2" fill="#ff6b5e"/><path d="M19 32c3 2 7 2 10 0"/><path d="M13 42l11-6 11 6"/></svg>',
+ok:'<svg viewBox="0 0 48 48" fill="none" stroke="#2fd27f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="16"/><path d="M16 25l6 6 11-13"/></svg>',
+no:'<svg viewBox="0 0 48 48" fill="none" stroke="#ff5d6c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="16"/><path d="M24 14v11l7 5"/></svg>'};
+function repDraw(){
+const R=document.getElementById("rep"),show_=PROF!=="mijita"&&PROF!=="x"&&PROF!=="";R.hidden=!show_;if(!show_)return;
+const p=PROFS[PROF]||"Perfil",now=new Date(),curK=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"),NM=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const prof={};const mk=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+(AP||[]).forEach(r=>{if(!apDone(r))return;const d=apDate(r[13]);if(!d)return;const k=mk(d);prof[k]=(prof[k]||0)+apN(r[16])});
+const L={};(LQ||[]).forEach(r=>{if(r&&/^\d{4}-\d{2}$/.test(String(r[0]||"")))L[r[0]]={est:String(r[1]||"").trim().toLowerCase(),imp:r[2],fec:String(r[3]||""),nota:String(r[4]||"")}});
+const set={};set[curK]=1;Object.keys(prof).forEach(k=>set[k]=1);Object.keys(L).forEach(k=>set[k]=1);
+const ks=Object.keys(set).sort().reverse(),e=v=>rf(Math.round(v*100)/100);
+const card=(cls,ic,l,v,s)=>'<div class="rc '+cls+'"><span class="ic">'+REP_IC[ic]+'</span><div class="tx"><span class="l">'+l+'</span><b>'+v+'</b><span class="s">'+s+'</span></div></div>';
+document.getElementById("repg").innerHTML=ks.map(k=>{const t=prof[k]||0,base=Math.max(t,0),own=base*.4,l=L[k],done=!!(l&&/^liquidad/.test(l.est)),mn=NM[+k.slice(5)-1]+" "+k.slice(0,4);
+const due=e(own),imp=l&&l.imp!==""&&l.imp!=null?e(apN(l.imp)):due;
+return '<div class="rm"><div class="rmh"><b>'+mn+(k===curK?' · mes actual':'')+'</b><span>Beneficio del mes: <b class="'+rc(t)+'">'+rf(t,1)+'</b></span></div><div class="rrow">'
++card("g","cap","Beneficio de "+escH(p),e(own),"40 %")
++card("","boss","Beneficio de Mijita",e(own),"40 %")
++card("h","thief","Hospitales y carreteras",e(base*.2),"20 %")
++card(done?"lq ok":"lq no",done?"ok":"no","Liquidado",done?imp:due,done?("Cobrado"+(l.fec?" el "+escH(l.fec):"")):(base>0?"Pendiente de cobro":"Sin beneficio que cobrar"))
++'</div></div>'}).join("");
+document.getElementById("repf").textContent="Reparto del beneficio de cada mes de "+p+": 40 % para "+p+", 40 % para Mijita y 20 % para Hacienda. El último mes siempre arriba. «Liquidado» está en rojo hasta que se anota en la hoja que "+p+" ha pagado la parte de Mijita. Beneficio por fecha de liquidación; los bonos y ajustes no cuentan. Si un mes va en pérdidas no se reparte nada."}
 function rsExtra(){try{
 const now=new Date(),y=now.getFullYear(),mo=now.getMonth(),nd=new Date(y,mo+1,0).getDate(),NM=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const day=new Array(nd).fill(0);let n=0;
 const dr=day.map(()=>[]);(AP||[]).forEach(r=>{if(!apDone(r))return;const d=apDate(r[13]);if(!d||d.getFullYear()!==y||d.getMonth()!==mo)return;day[d.getDate()-1]+=apN(r[16]);dr[d.getDate()-1].push(r);n++});
 const tot=day.reduce((a,b)=>a+b,0);
 const big=document.getElementById("mbig");big.textContent=rf(tot,1);big.className=rc(tot);
+try{repDraw(day,mo,y)}catch(x){console.error("reparto",x)}
 {const T=(typeof RS!=="undefined"&&RS&&RS.tot)||{},k=Object.keys(T).find(x=>x.toLowerCase().startsWith("beneficio neto")),v=k?rn(T[k]):null,tb=document.getElementById("tbig");tb.textContent=v===null?"–":rf(v,1);tb.className=v===null?"":rc(v);document.getElementById("rtsub").textContent="Beneficio neto acumulado del año "+now.getFullYear()+" (incluye bonos y ajustes)"}
 document.getElementById("msub").textContent=NM[mo]+" "+y+" · "+n+" apuestas liquidadas · beneficio por fecha de liquidación";
 // gráfico
@@ -637,7 +674,7 @@ if(j.error==="esquema"){showBanner("La hoja de este perfil no tiene la versi\u00
 if(j.error)throw new Error(j.error);
 if(j.perfil!==PROF){try{localStorage.setItem("mb_prof",j.perfil)}catch(e){}location.reload();return}
 applyAccess(j);
-D=j.ofertas;LEGS=j.legs;AP=j.apuestas||[];RS=j.resumen||null;MOVS=j.movs||[];FB={};TAREAS=j.tareas.map(x=>{const fb=parseFb(x.fb);if(fb)FB["t"+x.id]=fb;return{...x,due:parseDue(x.lim),t:titleOf(x.d),tipo:x.tipo||"Esperar"}});
+D=j.ofertas;LEGS=j.legs;AP=j.apuestas||[];RS=j.resumen||null;LQ=j.liq||[];MOVS=j.movs||[];FB={};TAREAS=j.tareas.map(x=>{const fb=parseFb(x.fb);if(fb)FB["t"+x.id]=fb;return{...x,due:parseDue(x.lim),t:titleOf(x.d),tipo:x.tipo||"Esperar"}});
 buildK();buildCasas();drawAll();tdraw();adraw();rdraw();try{window.ddraw&&ddraw()}catch(e){}oaFromAP();
 const h=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});sub.textContent="Datos en vivo desde Google Sheets · actualizado "+h;
 const c=document.getElementById("conn");if(c)c.hidden=true}
@@ -645,7 +682,7 @@ catch(e){sub.textContent="Sin conexión con la hoja ("+(e.message||e)+"). Se mue
 
 
 live();setInterval(()=>{const e=document.activeElement||{};if(!(e.tagName=="TEXTAREA"||(e.tagName=="INPUT"&&/^(text|search|url|number)$/i.test(e.type||"text"))))live()},60000);
-show(location.hash=="#ofertas"?"ofertas":location.hash=="#tareas"?"tareas":location.hash=="#apuestas"?"apuestas":location.hash=="#resumen"?"resumen":location.hash=="#dash"?"dash":"oab");
+show(location.hash=="#ofertas"?"ofertas":location.hash=="#tareas"?"tareas":location.hash=="#apuestas"?"apuestas":(location.hash=="#resumen"||location.hash=="#dash")?"resumen":"oab");
 </script><script>
 (function(){function toast(t){var e=document.createElement("div");e.className="cp-toast";e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.remove()},1400)}
 function fallback(t){var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(e){}a.remove()}
@@ -844,7 +881,7 @@ function kpis(DT,A,K){
 var CACHE={};
 function paint(id,R,subHtml){var v=view(id);return(v==="t"?R.tab:R.html)+(v==="t"?"":(R.legend||""))+(subHtml||"")}
 function ddraw(){
-  var root=$("v-dash");if(!root||root.hidden)return;
+  var root=$("v-dash");if(!root||root.closest("main[hidden]"))return;
   var DT=load(),ms=months(DT);
   if(S.per!=="all"&&ms.indexOf(S.per)<0)S.per="all";
   var A=agg(DT),R=release(DT),K=casas(DT),yrs={};ms.forEach(function(k){yrs[k.slice(0,4)]=1});var multi=Object.keys(yrs).length>1;
@@ -875,7 +912,7 @@ window.ddraw=ddraw;
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bind);else bind();
 })();
 
-try{if(location.hash=="#dash"&&!document.getElementById("v-dash").hidden)ddraw()}catch(e){}
+try{ddraw()}catch(e){}
 </script><script>
 (function(){var s=document.querySelector(".side");if(!s)return;
 function upd(){var more=s.scrollLeft+s.clientWidth<s.scrollWidth-4;s.classList.toggle("mr",more);s.classList.toggle("ml",s.scrollLeft>4)}
